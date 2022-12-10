@@ -1,47 +1,45 @@
-use druid::{
-    platform_menus::win::file::new,
-    widget::{Button, Flex, Label},
-    AppLauncher, FileDialogOptions, FileSpec, PlatformError, Widget, WidgetExt, WindowDesc, commands::{SHOW_SAVE_PANEL, SHOW_OPEN_PANEL},
+use fltk::{
+    window::{Window, WindowType},
+    button::Button,
+    file_chooser::{FileChooser, FileChooserAction},
 };
 
-fn main() -> Result<(), PlatformError> {
-    let main_window = WindowDesc::new(build_ui())
-        .title("BasicOps")
-        .window_size_policy(druid::WindowSizePolicy::Content);
-
-    let original_window = WindowDesc::new(original_window())
-        .title("Original image")
-        .window_size_policy(druid::WindowSizePolicy::Content);
-
-    let new_window = WindowDesc::new(new_window())
-        .title("New image")
-        .window_size_policy(druid::WindowSizePolicy::Content);
-
-    AppLauncher::with_window(main_window).launch(())?;
-    Ok(())
+struct MyDataModel {
+    window: Window,
+    button: Button,
 }
 
-fn build_ui() -> impl Widget<()> {
-    Flex::column()
-        .with_child(Button::new("Load image").on_click(
-            move |ctx, _, _| {
-                ctx.submit_command(SHOW_OPEN_PANEL.with(image_file_dialog()))
-            }
-        ))
-        .with_child(Button::new("Copy"))
-        .with_child(Button::new("Flip image"))
-        .with_child(Button::new("Quantize"))
-        .with_child(Button::new("Luminance"))
+impl MyDataModel {
+    fn new() -> Self {
+        let mut window = Window::new(100, 100, 200, 100, "File chooser example");
+        window.set_type(WindowType::Popup);
+
+        let mut button = Button::new(75, 50, 50, 25, "Open File");
+        button.set_callback(Self::on_click);
+
+        Self {
+            window,
+            button,
+        }
+    }
+
+    fn on_click(&mut self) {
+        let mut chooser = FileChooser::new(FileChooserAction::Open);
+        chooser.show();
+
+        // Do something with the selected file here...
+    }
+
+    fn show(&mut self) {
+        self.window.show();
+    }
 }
 
-fn original_window() -> impl Widget<()> {
-    Label::new("Original image")
-}
-
-fn new_window() -> impl Widget<()> {
-    Label::new("New image")
-}
-
-fn image_file_dialog() -> FileDialogOptions {
-    FileDialogOptions::new().allowed_types(vec![FileSpec::JPG])
+fn main() {
+    let img = ImageReader::open("Flor 2.jpg").unwrap().decode().unwrap();    
+    let new_image = quntization::quantize(&img, 2);
+    new_image.save("novo.png").unwrap();
+    
+    let mut app = MyDataModel::new();
+    app.show();
 }
