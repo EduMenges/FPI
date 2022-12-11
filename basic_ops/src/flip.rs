@@ -1,5 +1,4 @@
-use druid::piet::Image;
-use image::{ImageBuffer, Pixel, DynamicImage, Rgba};
+use image::{DynamicImage, Rgba};
 
 fn flip_vertical(img: &DynamicImage) -> image::ImageBuffer<Rgba<u8>, Vec<u8>>{
     let mut img_slice = img.to_rgba8();
