@@ -9,7 +9,7 @@ use fltk::{
     frame::Frame,
     image::{self, JpegImage},
     prelude::*,
-    text, window,
+    text, window, group::Flex,
 };
 use menu::MainMenu;
 use message::Message;
@@ -53,15 +53,17 @@ impl PhotoMenges {
             .unwrap()
             .deactivate();
 
-        let mut img_frame = Frame::default().with_size(400, 300);
+        let mut img_frame = Frame::default().size_of_parent();
         img_frame.set_pos(0, 35);
         img_frame.set_frame(fltk::enums::FrameType::EngravedBox);
-        img_frame.set_image_scaled(og_image);
-
-        let mut cu = Frame::new(400, 35, 100, 100, "Cu");
-        cu.set_image_scaled(Some(JpegImage::load("Flor 2.jpg").unwrap()));
+        img_frame.set_image(og_image);
 
         main_win.make_resizable(true);
+        img_frame.resize_callback(|i_f, _, _, _, _| {
+            if let img = i_f.image() {
+                println!("{:?}", img.);
+            }
+        });
         // only resize editor, not the menu bar
         main_win.end();
         main_win.show();
@@ -147,6 +149,7 @@ impl PhotoMenges {
     pub fn launch(&mut self) {
         while self.app.wait() {
             use Message::*;
+
             if let Some(msg) = self.r.recv() {
                 match msg {
                     Changed => todo!(),
@@ -161,11 +164,15 @@ impl PhotoMenges {
                         if !filename.to_string_lossy().to_string().is_empty() {
                             if filename.exists() {
                                 match JpegImage::load(&filename) {
-                                    Ok(sh) => {
-                                        self.img_frame.set_image_scaled(Some(sh));
+                                    Ok(mut sh) => {
+                                        sh.scale(self.img_frame.width(), self.img_frame.height(), true, true);
+                                        self.img_frame.set_image(Some(sh));
+                                        self.img_frame.redraw();
                                         self.filename = Some(filename);
                                     },
-                                    Err(e) => dialog::alert(center().0 - 200, center().1 - 100, &format!("An issue occured while loading the file: {}", e)),
+                                    Err(e) => {
+                                        self.img_frame.set_image::<JpegImage>(None);
+                                        dialog::alert(center().0 - 200, center().1 - 100, &format!("An issue occured while loading the file: {}", e));},
                                 }
                             } else {
                                 dialog::alert(center().0 - 200, center().1 - 100, "File does not exist!");

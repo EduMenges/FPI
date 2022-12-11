@@ -1,7 +1,9 @@
+use std::ops::Deref;
+
 use fltk::{
     app,
     enums::{FrameType, Shortcut},
-    menu,
+    menu::{self, SysMenuBar},
     prelude::{MenuExt, WidgetExt},
 };
 
@@ -82,5 +84,13 @@ impl MainMenu {
         );
 
         Self { menu }
+    }
+}
+
+impl Deref for MainMenu {
+    type Target = menu::SysMenuBar;
+
+    fn deref(&self) -> &Self::Target {
+        &self.menu
     }
 }
