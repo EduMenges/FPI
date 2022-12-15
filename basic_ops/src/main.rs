@@ -7,9 +7,10 @@ use fltk::{
     app, dialog,
     enums::{Color, Event},
     frame::Frame,
+    group::{Flex, self},
     image::{self, JpegImage},
     prelude::*,
-    text, window, group::Flex,
+    text, window,
 };
 use menu::MainMenu;
 use message::Message;
@@ -24,7 +25,8 @@ pub struct PhotoMenges {
     r: app::Receiver<Message>,
     main_win: window::Window,
     menu: MainMenu,
-    img_frame: Frame,
+    og_image: Frame,
+    new_image: Frame,
 }
 
 pub fn center() -> (i32, i32) {
@@ -39,7 +41,6 @@ impl PhotoMenges {
         let app = app::App::default().with_scheme(app::Scheme::Gtk);
         app::background(211, 211, 211);
         let (s, r) = app::channel::<Message>();
-        let og_image: Option<image::JpegImage> = None;
 
         let mut main_win = window::Window::default()
             .with_size(800, 600)
@@ -53,17 +54,15 @@ impl PhotoMenges {
             .unwrap()
             .deactivate();
 
-        let mut img_frame = Frame::default().size_of_parent();
-        img_frame.set_pos(0, 35);
-        img_frame.set_frame(fltk::enums::FrameType::EngravedBox);
-        img_frame.set_image(og_image);
+        let img_panel = group::Flex::default().with_pos(0, 35).size_of_parent();
 
+        let mut og_image = Frame::default().with_label("Original image");
+        let mut new_image = Frame::default().with_label("New image");
+        og_image.set_frame(fltk::enums::FrameType::EngravedBox);
+        new_image.set_frame(fltk::enums::FrameType::EngravedBox);
+
+        img_panel.end();
         main_win.make_resizable(true);
-        img_frame.resize_callback(|i_f, _, _, _, _| {
-            if let img = i_f.image() {
-                println!("{:?}", img.);
-            }
-        });
         // only resize editor, not the menu bar
         main_win.end();
         main_win.show();
@@ -81,7 +80,7 @@ impl PhotoMenges {
             );
             match JpegImage::load(&args[1]) {
                 Ok(sh) => {
-                    img_frame.set_image_scaled(Some(sh));
+                    og_image.set_image_scaled(Some(sh));
                     Some(PathBuf::from(args[1].clone()))
                 }
                 Err(e) => {
@@ -104,7 +103,8 @@ impl PhotoMenges {
             r,
             main_win,
             menu,
-            img_frame,
+            og_image,
+            new_image,
         }
     }
 
@@ -152,7 +152,7 @@ impl PhotoMenges {
 
             if let Some(msg) = self.r.recv() {
                 match msg {
-                    Changed => todo!(),
+                    Changed => self.modified = true,
                     Open => {
                         let mut open_dialog = dialog::FileDialog::new(dialog::FileDialogType::BrowseFile);
                         open_dialog.set_option(dialog::FileDialogOptions::NoOptions);
@@ -165,13 +165,14 @@ impl PhotoMenges {
                             if filename.exists() {
                                 match JpegImage::load(&filename) {
                                     Ok(mut sh) => {
-                                        sh.scale(self.img_frame.width(), self.img_frame.height(), true, true);
-                                        self.img_frame.set_image(Some(sh));
-                                        self.img_frame.redraw();
+                                        sh.scale(self.og_image.width(), self.og_image.height(), true, true);
+                                        self.og_image.set_image(Some(sh));
+                                        self.og_image.image().unwrap().inactive();
+                                        self.og_image.redraw();
                                         self.filename = Some(filename);
                                     },
                                     Err(e) => {
-                                        self.img_frame.set_image::<JpegImage>(None);
+                                        self.og_image.set_image::<JpegImage>(None);
                                         dialog::alert(center().0 - 200, center().1 - 100, &format!("An issue occured while loading the file: {}", e));},
                                 }
                             } else {
@@ -196,7 +197,13 @@ impl PhotoMenges {
                             self.app.quit();
                         }
                     },
-                    Copy => todo!(),
+                    Copy => {
+                        if let Some(img) = self.og_image.image() {
+                            self.new_image.set_image(Some(img.to_rgb_image().unwrap()));
+                            self.new_image.redraw();
+                        }
+                        self.modified = false;
+                    },
                     MirrorVertical => todo!(),
                     MirorrHorizontal => todo!(),
                     GrayScale => todo!(),
