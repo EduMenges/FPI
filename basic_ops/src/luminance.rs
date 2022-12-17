@@ -1,12 +1,16 @@
-use image::{DynamicImage, Rgba, ImageBuffer};
+use image::{DynamicImage, GenericImage, GenericImageView};
 
-pub fn luminance(img: &DynamicImage) -> ImageBuffer<Rgba<u8>, Vec<u8>>{
-    let mut new_image = img.to_rgba8();
-
-    for pixel in new_image.pixels_mut() {
-        let new_value = (f64::from(pixel[0]) * 0.299 + f64::from(pixel[1]) * 0.587 + f64::from(pixel[2]) * 0.114) as u8;
-        *pixel = Rgba([new_value, new_value, new_value, pixel[3]]);
+pub fn gray_scale(img: &mut DynamicImage) {
+    for y in 0..img.height() {
+    for x in 0..img.width() {
+            let pixel = img.get_pixel(x, y);
+            let gray_pixel =
+                (pixel[0] as f64 * 0.299 + pixel[1] as f64 * 0.587 + pixel[2] as f64 * 0.114) as u8;
+            img.put_pixel(
+                x,
+                y,
+                image::Rgba([gray_pixel, gray_pixel, gray_pixel, pixel[3]]),
+            );
+        }
     }
-
-    new_image
 }

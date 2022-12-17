@@ -1,29 +1,29 @@
-use image::{DynamicImage, Rgba};
+use image::{DynamicImage, GenericImageView, GenericImage};
 
-fn flip_vertical(img: &DynamicImage) -> image::ImageBuffer<Rgba<u8>, Vec<u8>>{
-    let mut img_slice = img.to_rgba8();
-    let width = usize::try_from(img_slice.width()).unwrap();
-    let height = usize::try_from(img_slice.height()).unwrap();
+pub fn flip_vertical(img: &mut DynamicImage) {
+    let (width, height) = img.dimensions();
 
-    for i in 0..height / 2 {
-        for j in 0..width {
-            img_slice.swap(i + j, width + height - i - j);
+    for h in 0..=(height / 2) {
+        for w in 0..width {
+            let opposite_pos = height - h - 1;
+            let pixel_top = img.get_pixel(w, h);
+            let pixel_bottom = img.get_pixel(w, opposite_pos);
+            img.put_pixel(w, h, pixel_bottom);
+            img.put_pixel(w, opposite_pos, pixel_top);
         }
     }
-
-    img_slice
 }
 
-fn flip_horizontal(img: &DynamicImage) -> image::ImageBuffer<Rgba<u8>, Vec<u8>>{
-    let mut img_slice = img.to_rgba8();
-    let width = usize::try_from(img_slice.width()).unwrap();
-    let height = usize::try_from(img_slice.height()).unwrap();
-    
-    for i in 0..width / 2 {
-        for j in 0..height {
-            img_slice.swap(i + j, width + height - i - j);
+pub fn flip_horizontal(img: &mut DynamicImage) {
+    let (width, height) = img.dimensions();
+
+    for w in 0..=(width / 2) {
+        for h in 0..height {
+            let opposite_pos = width - w - 1;
+            let pixel_left = img.get_pixel(w, h);
+            let pixel_right = img.get_pixel(opposite_pos, h);
+            img.put_pixel(w, h, pixel_right);
+            img.put_pixel(opposite_pos, h, pixel_left);
         }
     }
-
-    img_slice
 }
