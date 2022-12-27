@@ -1,10 +1,6 @@
 use image::{DynamicImage, GenericImage, GenericImageView, Rgba};
 
-use crate::luminance::*;
-
 pub fn quantize(img: &mut DynamicImage, n: u8) {
-    gray_scale(img);
-
     let t_1 = img.pixels().min_by_key(|(_, _, p)| p[0]).unwrap().2[0];
     let t_2 = img.pixels().max_by_key(|(_, _, p)| p[0]).unwrap().2[0];
 

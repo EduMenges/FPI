@@ -1,4 +1,4 @@
-use image::{DynamicImage, GenericImageView, GenericImage};
+use image::{DynamicImage, GenericImage, GenericImageView};
 
 pub fn flip_vertical(img: &mut DynamicImage) {
     let (width, height) = img.dimensions();
