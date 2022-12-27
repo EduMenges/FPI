@@ -6,3 +6,4 @@ pub mod linear_operations;
 pub mod zoom;
 pub mod rotate;
 pub mod convolve;
+pub mod filters;

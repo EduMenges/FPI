@@ -1,4 +1,4 @@
-use egui::{Ui, Slider};
+use egui::{Slider, Ui};
 
 use crate::app::PhotoMenges;
 
@@ -12,7 +12,7 @@ pub fn quantization(app: &mut PhotoMenges, ui: &mut Ui) {
     ui.add(Slider::new(&mut app.quantization_value, 2..=254));
 
     if ui.button("Apply").clicked() {
-        app.quantize();
+        app.new_image.as_mut().unwrap().quantize(app.quantization_value);
     }
 }
 
@@ -22,7 +22,7 @@ pub fn brightness(app: &mut PhotoMenges, ui: &mut Ui) {
     ui.add(Slider::new(&mut app.brightness_value, -255..=255));
 
     if ui.button("Apply").clicked() {
-        app.do_brightness();
+        app.new_image.as_mut().unwrap().brightness(app.brightness_value);
     }
 }
 
@@ -32,26 +32,27 @@ pub fn contrast(app: &mut PhotoMenges, ui: &mut Ui) {
     ui.add(Slider::new(&mut app.contrast_value, 1..=255));
 
     if ui.button("Apply").clicked() {
-        app.do_contrast();
+        app.new_image.as_mut().unwrap().contrast(app.contrast_value);
     }
 }
 
 pub fn general(app: &mut PhotoMenges, ui: &mut Ui) {
-    ui.label("Zoom in");
-    if ui.button("Apply").clicked() {
-        app.do_zoom_in();
+    if let Some(img) = &mut app.new_image {
+        ui.label("Zoom in");
+        if ui.button("Apply").clicked() {
+            img.zoom_in();
+        }
+
+        ui.separator();
+        ui.label("Zoom out");
+
+        ui.add(Slider::new(&mut app.zoom_factor.0, 1..=10).text("X factor"));
+        ui.add(Slider::new(&mut app.zoom_factor.1, 1..=10).text("Y factor"));
+
+        if ui.button("Apply").clicked() {
+            img.zoom_out(app.zoom_factor);
+        };
+
+        ui.separator();
     }
-    
-    ui.separator();
-    ui.label("Zoom out");
-
-    ui.add(Slider::new(&mut app.zoom_factor.0, 1..=10).text("X factor"));
-    ui.add(Slider::new(&mut app.zoom_factor.1, 1..=10).text("Y factor"));
-
-    if ui.button("Apply").clicked() {
-        app.do_zoom_out();
-    };
-
-    ui.separator();
-    
 }

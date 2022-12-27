@@ -1,10 +1,13 @@
 use basic_ops::{
-    linear_operations::{adjust_brightness, adjust_contrast},
+    flip::{flip_horizontal, flip_vertical},
+    histogram::equalize_histogram,
+    linear_operations::{adjust_brightness, adjust_contrast, negative},
     luminance::gray_scale,
     quantization,
-    zoom::{zoom_in, zoom_out}, histogram::equalize_histogram,
+    rotate::rotate,
+    zoom::{zoom_in, zoom_out},
 };
-use egui::{Image, Ui};
+use egui::{Ui, Context};
 use image::DynamicImage;
 
 use crate::{histogram_graph::HistogramGraph, image_wrapper::ImageWrapper};
@@ -17,8 +20,8 @@ pub struct ImageDecorator {
 }
 
 impl ImageDecorator {
-    pub fn new(img: DynamicImage, ui: Ui, name: String, title: String) -> Self {
-        let wrapper = ImageWrapper::new(img, name, title, ui.ctx());
+    pub fn new(img: DynamicImage, ctx: &Context, name: String, title: String) -> Self {
+        let wrapper = ImageWrapper::new(img, name, title, ctx);
         let histograms = HistogramGraph::all_histograms(&wrapper.img);
 
         Self {
@@ -27,6 +30,16 @@ impl ImageDecorator {
             modified: false,
             histograms,
         }
+    }
+
+    pub fn flip_horizontal(&mut self) {
+        flip_horizontal(&mut self.wrapper.img);
+        self.refresh();
+    }
+
+    pub fn flip_vertical(&mut self) {
+        flip_vertical(&mut self.wrapper.img);
+        self.refresh()
     }
 
     pub fn ui(&mut self, ui: &mut Ui) {
@@ -59,6 +72,7 @@ impl ImageDecorator {
 
     pub fn copy(&mut self, img: &DynamicImage) {
         self.wrapper.img = img.clone();
+        self.refresh();
     }
 
     pub fn zoom_in(&mut self) {
@@ -84,5 +98,20 @@ impl ImageDecorator {
         self.update_histograms();
         self.wrapper.reset();
         self.modified = true;
+    }
+
+    pub fn negative(&mut self) {
+        negative(&mut self.wrapper.img);
+        self.refresh();
+    }
+
+    pub fn rotate_clockwise(&mut self) {
+        self.wrapper.img = rotate(self.wrapper.img.clone(), true);
+        self.refresh();
+    }
+
+    pub fn rotate_counter(&mut self) {
+        self.wrapper.img = rotate(self.wrapper.img.clone(), false);
+        self.refresh();
     }
 }
