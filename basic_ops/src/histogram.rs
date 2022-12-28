@@ -1,16 +1,20 @@
-use image::{DynamicImage, GenericImageView};
+use image::{DynamicImage, GenericImageView, GrayAlphaImage, GenericImage};
 
 use crate::{linear_operations::linear_template_function, luminance::gray_scale};
 
-pub fn calculate_histogram(img: &DynamicImage) -> [u32; 256] {
+pub type Histogram = [u32; 256];
+
+pub fn calculate_histogram(img: &GrayAlphaImage) -> Histogram {
     let mut out: [u32; 256] = [0; 256];
-    for (_, _, p) in img.pixels() {
-        out[p[0] as usize] += 1;
+
+    for pixel in img.pixels() {
+        out[pixel.0[0] as usize] += 1;
     }
+
     out
 }
 
-pub fn cumulative_histogram(histogram: &[u32; 256]) -> [u32; 256] {
+pub fn cumulative_histogram(histogram: &[u32; 256]) -> Histogram {
     let mut out: [u32; 256] = [0; 256];
     out[0] = histogram[0];
     for i in 1..256 {
@@ -19,7 +23,7 @@ pub fn cumulative_histogram(histogram: &[u32; 256]) -> [u32; 256] {
     out
 }
 
-pub fn normalize_histogram(histogram: [u32; 256]) -> [u32; 256] {
+pub fn normalize_histogram(histogram: &[u32; 256]) -> Histogram {
     let highest = *histogram.iter().max().unwrap();
     let mut out: [u32; 256] = [0; 256];
 
@@ -30,14 +34,23 @@ pub fn normalize_histogram(histogram: [u32; 256]) -> [u32; 256] {
     out
 }
 
-pub fn equalize_histogram(img: &mut DynamicImage, in_color: bool) {
-    let histogram = normalize_histogram(if in_color {
-        cumulative_histogram(&calculate_histogram(img))
-    } else {
-        let mut luminized = img.clone();
-        gray_scale(&mut luminized);
-        cumulative_histogram(&calculate_histogram(&luminized))
-    });
+#[inline]
+pub fn normalized_cumulative(img: &DynamicImage) -> Histogram {
+    normalize_histogram(&cumulative_histogram(&calculate_histogram(
+        &img.to_luma_alpha8(),
+    )))
+}
+
+pub fn equalize_histogram(img: &mut DynamicImage) {
+    let luminized = match img.as_mut_luma_alpha8() {
+        Some(img) => img,
+        None => {
+            gray_scale(img);
+            img.as_mut_luma_alpha8().unwrap()
+        }
+    };
+
+    let histogram = normalize_histogram(&cumulative_histogram(&calculate_histogram(luminized)));
 
     linear_template_function(img, |mut pixel| {
         for i in 0..3_usize {
@@ -45,4 +58,37 @@ pub fn equalize_histogram(img: &mut DynamicImage, in_color: bool) {
         }
         pixel
     })
+}
+
+pub fn matching(img: &mut DynamicImage, source: &DynamicImage) {
+    let nch_img = normalized_cumulative(img);
+    let nch_source = normalized_cumulative(source);
+
+    let mut hm: [u8; 256] = [Default::default(); 256];
+
+    for (index, shade) in nch_img.iter().enumerate() {
+        hm[index] = nch_img[find_matching_val(shade, &nch_source)] as u8;
+    }
+
+    for y in 0..img.height() {
+        for x in 0..img.width() {
+            let mut pixel = img.get_pixel(x, y);
+
+            for i in 0..3 {
+                pixel.0[i] = hm[pixel.0[i] as usize];
+            }
+
+            img.put_pixel(x, y, pixel);
+        }
+    }
+
+}
+
+fn find_matching_val(val: &u32, histogram: &[u32; 256]) -> usize {
+    let ans = histogram.iter().enumerate().find(|(_, hist)| val == *hist);
+
+    match ans {
+        Some((index, _)) => index,
+        None => 0,
+    }
 }

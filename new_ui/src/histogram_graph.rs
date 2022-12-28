@@ -1,4 +1,4 @@
-use basic_ops::histogram::{calculate_histogram, cumulative_histogram, normalize_histogram};
+use basic_ops::{histogram::{calculate_histogram, cumulative_histogram, normalize_histogram}};
 use egui::{
     plot::{Bar, BarChart, Legend, Plot},
     Context, Window,
@@ -7,7 +7,7 @@ use image::DynamicImage;
 
 #[derive(Clone)]
 pub struct HistogramGraph {
-    open: bool,
+    pub open: bool,
     title: String,
     raw_values: [u32; 256],
 }
@@ -17,15 +17,15 @@ impl Default for HistogramGraph {
         Self {
             open: false,
             title: Default::default(),
-            raw_values: [0; 256],
+            raw_values: [Default::default(); 256],
         }
     }
 }
 
 impl HistogramGraph {
-    pub fn new(title: String, histogram: [u32; 256]) -> Self {
+    pub const fn new(title: String, histogram: [u32; 256]) -> Self {
         Self {
-            open: true,
+            open: false,
             title,
             raw_values: histogram,
         }
@@ -49,7 +49,10 @@ impl HistogramGraph {
     }
 
     pub fn all_histograms(img: &DynamicImage) -> [Self; 3] {
-        let regular = Self::new("Histogram".to_owned(), calculate_histogram(img));
+        let regular = Self::new(
+            "Histogram".to_owned(),
+            calculate_histogram(&img.to_luma_alpha8()),
+        );
 
         let cumulative = Self::new(
             "Cumulative".to_owned(),
@@ -58,9 +61,13 @@ impl HistogramGraph {
 
         let normalized_cumulative = Self::new(
             "Normalized cumulative".to_owned(),
-            normalize_histogram(cumulative.raw_values),
+            normalize_histogram(&cumulative.raw_values),
         );
 
         [regular, cumulative, normalized_cumulative]
+    }
+
+    pub fn title(&self) -> &str {
+        &self.title
     }
 }

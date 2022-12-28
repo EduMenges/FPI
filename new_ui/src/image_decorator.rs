@@ -1,4 +1,6 @@
 use basic_ops::{
+    convolve::convolve,
+    filters::KernelWrp,
     flip::{flip_horizontal, flip_vertical},
     histogram::equalize_histogram,
     linear_operations::{adjust_brightness, adjust_contrast, negative},
@@ -7,29 +9,42 @@ use basic_ops::{
     rotate::rotate,
     zoom::{zoom_in, zoom_out},
 };
-use egui::{Ui, Context};
+use egui::{Context, Ui};
 use image::DynamicImage;
 
 use crate::{histogram_graph::HistogramGraph, image_wrapper::ImageWrapper};
 
+#[derive(Clone)]
 pub struct ImageDecorator {
-    wrapper: ImageWrapper,
-    gray_scale: bool,
-    modified: bool,
     histograms: [HistogramGraph; 3],
+    modified: bool,
+    pub wrapper: ImageWrapper,
 }
 
 impl ImageDecorator {
-    pub fn new(img: DynamicImage, ctx: &Context, name: String, title: String) -> Self {
-        let wrapper = ImageWrapper::new(img, name, title, ctx);
-        let histograms = HistogramGraph::all_histograms(&wrapper.img);
+    pub fn brightness(&mut self, n: i16) {
+        adjust_brightness(&mut self.wrapper.img, n);
+        self.refresh();
+    }
 
-        Self {
-            wrapper,
-            gray_scale: false,
-            modified: false,
-            histograms,
-        }
+    pub fn contrast(&mut self, n: u8) {
+        adjust_contrast(&mut self.wrapper.img, n);
+        self.refresh();
+    }
+
+    pub fn convolve(&mut self, kernel: &KernelWrp) {
+        self.wrapper.img = convolve(self.wrapper.img.clone(), kernel);
+        self.refresh()
+    }
+
+    pub fn copy(&mut self, img: &DynamicImage) {
+        self.wrapper.img = img.clone();
+        self.refresh();
+    }
+
+    pub fn equalize(&mut self) {
+        equalize_histogram(&mut self.wrapper.img);
+        self.refresh();
     }
 
     pub fn flip_horizontal(&mut self) {
@@ -42,18 +57,25 @@ impl ImageDecorator {
         self.refresh()
     }
 
-    pub fn ui(&mut self, ui: &mut Ui) {
-        self.wrapper.ui(ui);
-    }
-
-    pub fn brightness(&mut self, n: i16) {
-        adjust_brightness(&mut self.wrapper.img, n);
+    pub fn gray_scale(&mut self) {
+        gray_scale(&mut self.wrapper.img);
         self.refresh();
     }
 
-    pub fn contrast(&mut self, n: u8) {
-        adjust_contrast(&mut self.wrapper.img, n);
+    pub fn negative(&mut self) {
+        negative(&mut self.wrapper.img);
         self.refresh();
+    }
+
+    pub fn new(img: DynamicImage, ctx: &Context, name: String, title: String) -> Self {
+        let wrapper = ImageWrapper::new(img, name, title, ctx);
+        let histograms = HistogramGraph::all_histograms(&wrapper.img);
+
+        Self {
+            wrapper,
+            modified: false,
+            histograms,
+        }
     }
 
     pub fn quantize(&mut self, n: u8) {
@@ -62,17 +84,42 @@ impl ImageDecorator {
         self.refresh();
     }
 
-    pub fn gray_scale(&mut self) {
-        if !self.gray_scale {
-            gray_scale(&mut self.wrapper.img);
-            self.gray_scale = true;
-            self.refresh();
+    pub fn refresh(&mut self) {
+        self.update_histograms();
+        self.wrapper.reset();
+        self.modified = true;
+    }
+
+    pub fn rotate_clockwise(&mut self) {
+        self.wrapper.img = rotate(self.wrapper.img.clone(), true);
+        self.refresh();
+    }
+
+    pub fn rotate_counter(&mut self) {
+        self.wrapper.img = rotate(self.wrapper.img.clone(), false);
+        self.refresh();
+    }
+
+    pub fn ui(&mut self, ui: &mut Ui) {
+        self.wrapper.ui(ui);
+
+        ui.menu_button("View ⏷", |ui| {
+            for hist in &mut self.histograms {
+                if ui.button(hist.title()).clicked() {
+                    hist.open = true;
+                }
+            }
+        });
+
+        for hist in &mut self.histograms {
+            if hist.open {
+                hist.plot_histogram(ui.ctx());
+            }
         }
     }
 
-    pub fn copy(&mut self, img: &DynamicImage) {
-        self.wrapper.img = img.clone();
-        self.refresh();
+    pub fn update_histograms(&mut self) {
+        self.histograms = HistogramGraph::all_histograms(&self.wrapper.img);
     }
 
     pub fn zoom_in(&mut self) {
@@ -85,33 +132,8 @@ impl ImageDecorator {
         self.refresh();
     }
 
-    pub fn equalize(&mut self) {
-        equalize_histogram(&mut self.wrapper.img, !self.gray_scale);
-        self.refresh();
-    }
-
-    pub fn update_histograms(&mut self) {
-        self.histograms = HistogramGraph::all_histograms(&self.wrapper.img);
-    }
-
-    pub fn refresh(&mut self) {
-        self.update_histograms();
-        self.wrapper.reset();
-        self.modified = true;
-    }
-
-    pub fn negative(&mut self) {
-        negative(&mut self.wrapper.img);
-        self.refresh();
-    }
-
-    pub fn rotate_clockwise(&mut self) {
-        self.wrapper.img = rotate(self.wrapper.img.clone(), true);
-        self.refresh();
-    }
-
-    pub fn rotate_counter(&mut self) {
-        self.wrapper.img = rotate(self.wrapper.img.clone(), false);
+    pub fn change_wrapper(&mut self, wrapper: ImageWrapper) {
+        self.wrapper = wrapper;
         self.refresh();
     }
 }

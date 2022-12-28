@@ -4,18 +4,23 @@ use crate::{
     histogram_graph::*,
     image_decorator::ImageDecorator,
     image_wrapper::ImageWrapper,
+    preview::*,
     side_menu::{self, general},
 };
 
+use basic_ops::{
+    filters::{KernelWrp, GAUSSIAN_FILTER},
+    luminance::gray_scale,
+};
 use eframe::App;
 use egui::{menu, CentralPanel, Context, SidePanel, TopBottomPanel, Ui};
 
 pub struct PhotoMenges {
     side_menu: fn(&mut Self, &mut Ui),
     img_file_path: Option<PathBuf>,
-    modified: bool,
-    gray_scale: bool,
+    pub kernel: KernelWrp,
     og_image: Option<ImageWrapper>,
+    preview: Option<Preview>,
     pub new_image: Option<ImageDecorator>,
     pub zoom_factor: (u8, u8),
     pub quantization_value: u8,
@@ -30,14 +35,14 @@ impl Default for PhotoMenges {
             side_menu: side_menu::no_panel,
             img_file_path: Default::default(),
             histograms: Vec::default(),
-            modified: Default::default(),
             og_image: Default::default(),
             new_image: Default::default(),
             quantization_value: 4,
-            gray_scale: false,
             brightness_value: 50,
             contrast_value: 5,
             zoom_factor: (1, 1),
+            kernel: GAUSSIAN_FILTER.clone(),
+            preview: None,
         }
     }
 }
@@ -66,8 +71,10 @@ impl PhotoMenges {
                 if let Some(img) = &mut self.new_image {
                     if ui.button("Copy").clicked() {
                         img.copy(&self.og_image.as_ref().unwrap().img);
+                        ui.close_menu();
                     } else if ui.button("Save as...").clicked() {
                         todo!();
+                        ui.close_menu();
                     }
                 }
 
@@ -86,7 +93,11 @@ impl PhotoMenges {
                         } else if ui.button("Contrast...").clicked() {
                             self.side_menu = side_menu::contrast;
                         } else if ui.button("Equalize").clicked() {
-                            img.equalize();
+                            let mut equalized = img.clone();
+                            equalized.equalize();
+                            let mut grayed = img.to_owned();
+                            grayed.gray_scale();
+                            self.preview = Some(Preview::new(grayed, equalized));
                         }
                     });
                     ui.menu_button("Transform", |ui| {
@@ -111,15 +122,18 @@ impl PhotoMenges {
                         self.side_menu = side_menu::quantization;
                     }
                 });
-                // ui.menu_button("View", |ui| {
-                //     if ui.button("Histogram").clicked() {
-                //         self.do_histogram();
-                //     } else if ui.button("Cumulative histogram").clicked() {
-                //         self.do_cumulative_histogram();
-                //     } else if ui.button("Normalized cumulative histogram").clicked() {
-                //         self.do_normalized_cumulative_histogram();
-                //     }
-                // });
+                ui.menu_button("Filter", |ui| {
+                    if ui.button("Convolve").clicked() {
+                        self.side_menu = side_menu::convolve;
+                    };
+                });
+
+                if let Some(preview) = &mut self.preview {
+                    if let Some(wrapper) = preview.ui(ui) {
+                        self.preview = None;
+                        img.change_wrapper(wrapper);
+                    }
+                }
             };
         });
 

@@ -3,6 +3,7 @@ use image::DynamicImage;
 
 use crate::image_adaptor::load_image_from_memory;
 
+#[derive(Clone)]
 pub struct ImageWrapper {
     pub img: DynamicImage,
     texture: Option<egui::TextureHandle>,

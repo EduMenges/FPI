@@ -8,6 +8,7 @@ mod image_adaptor;
 pub mod image_wrapper;
 mod side_menu;
 pub mod image_decorator;
+pub mod preview;
 
 fn main() {
     let win_options = NativeOptions {
