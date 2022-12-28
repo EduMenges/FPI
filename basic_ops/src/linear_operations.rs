@@ -30,7 +30,7 @@ pub fn adjust_contrast(img: &mut DynamicImage, n: u8) {
     linear_template_function(img, |mut pixel| {
         for i in 0..3_usize {
             pixel[i] = pixel[i].saturating_mul(n);
-        };
+        }
         pixel
     });
 }

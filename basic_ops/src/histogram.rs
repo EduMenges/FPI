@@ -1,4 +1,4 @@
-use image::{DynamicImage, GenericImageView, GrayAlphaImage, GenericImage};
+use image::{DynamicImage, GenericImage, GenericImageView, GrayAlphaImage};
 
 use crate::{linear_operations::linear_template_function, luminance::gray_scale};
 
@@ -14,16 +14,18 @@ pub fn calculate_histogram(img: &GrayAlphaImage) -> Histogram {
     out
 }
 
-pub fn cumulative_histogram(histogram: &[u32; 256]) -> Histogram {
+pub fn cumulative_histogram(histogram: &Histogram) -> Histogram {
     let mut out: [u32; 256] = [0; 256];
+
     out[0] = histogram[0];
     for i in 1..256 {
         out[i] = out[i - 1] + histogram[i];
     }
+
     out
 }
 
-pub fn normalize_histogram(histogram: &[u32; 256]) -> Histogram {
+pub fn normalize_histogram(histogram: &Histogram) -> Histogram {
     let highest = *histogram.iter().max().unwrap();
     let mut out: [u32; 256] = [0; 256];
 
@@ -56,6 +58,7 @@ pub fn equalize_histogram(img: &mut DynamicImage) {
         for i in 0..3_usize {
             pixel[i] = histogram[pixel[i] as usize] as u8;
         }
+
         pixel
     })
 }
@@ -81,7 +84,6 @@ pub fn matching(img: &mut DynamicImage, source: &DynamicImage) {
             img.put_pixel(x, y, pixel);
         }
     }
-
 }
 
 fn find_matching_val(val: &u32, histogram: &[u32; 256]) -> usize {

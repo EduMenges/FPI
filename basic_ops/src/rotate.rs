@@ -2,11 +2,13 @@ use image::{DynamicImage, GenericImage, GenericImageView};
 
 pub fn rotate(img: DynamicImage, clockwise: bool) -> DynamicImage {
     let mut new_image = DynamicImage::new_rgba8(img.height(), img.width());
+
     let matrix = if clockwise {
         CLOCKWISE_MATRIX
     } else {
         COUNTER_MATRIX
     };
+
     let dimensions = new_image.dimensions();
 
     for pixel in img.pixels() {
@@ -16,15 +18,6 @@ pub fn rotate(img: DynamicImage, clockwise: bool) -> DynamicImage {
 
     new_image
 }
-
-// #[inline]
-// fn calc_pos(og_pos: u32, boundary: u32, clockwise: bool) -> u32 {
-//     if clockwise {
-//         og_pos
-//     } else {
-//         boundary - og_pos - 1
-//     }
-// }
 
 type RotationMatrix = [[i64; 2]; 2];
 

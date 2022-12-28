@@ -18,6 +18,7 @@ impl KernelWrp {
     pub fn new(kernel: Kernel, name: String) -> Self {
         let mut rotated = kernel;
         rotate_kernel(&mut rotated);
+        
         Self {
             kernel,
             name,

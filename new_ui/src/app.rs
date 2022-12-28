@@ -1,6 +1,7 @@
 use std::path::PathBuf;
 
 use crate::{
+    file_loading::{load_img_from_path, open_dialog},
     histogram_graph::*,
     image_decorator::ImageDecorator,
     image_wrapper::ImageWrapper,
@@ -8,10 +9,7 @@ use crate::{
     side_menu::{self, general},
 };
 
-use basic_ops::{
-    filters::{KernelWrp, GAUSSIAN_FILTER},
-    luminance::gray_scale,
-};
+use basic_ops::filters::{KernelWrp, GAUSSIAN_FILTER};
 use eframe::App;
 use egui::{menu, CentralPanel, Context, SidePanel, TopBottomPanel, Ui};
 
@@ -56,12 +54,7 @@ impl PhotoMenges {
         menu::bar(ui, |ui| {
             ui.menu_button("File", |ui| {
                 if ui.button("Open...").clicked() {
-                    if let Some(path) = rfd::FileDialog::new()
-                        .add_filter("JPEG", &["jpg", "jpeg"])
-                        .add_filter("PNG", &["png"])
-                        .add_filter("BMP", &["bmp"])
-                        .pick_file()
-                    {
+                    if let Some(path) = open_dialog() {
                         self.img_file_path = Some(path);
                         self.load_og_img(ui.ctx());
                         ui.close_menu();
@@ -73,7 +66,7 @@ impl PhotoMenges {
                         img.copy(&self.og_image.as_ref().unwrap().img);
                         ui.close_menu();
                     } else if ui.button("Save as...").clicked() {
-                        todo!();
+                        img.save_image();
                         ui.close_menu();
                     }
                 }
@@ -92,14 +85,31 @@ impl PhotoMenges {
                             self.side_menu = side_menu::brightness;
                         } else if ui.button("Contrast...").clicked() {
                             self.side_menu = side_menu::contrast;
-                        } else if ui.button("Equalize").clicked() {
-                            let mut equalized = img.clone();
+                        } else if ui.button("Equalize...").clicked() {
+                            let mut equalized = ImageDecorator::new(img.wrapper.img.clone(), ui.ctx(), "equalized".to_owned(), "Equalized".to_owned());
                             equalized.equalize();
-                            let mut grayed = img.to_owned();
+
+                            let mut grayed = ImageDecorator::new(img.wrapper.img.clone(), ui.ctx(), "original".to_owned(), "Original".to_owned());
                             grayed.gray_scale();
+
                             self.preview = Some(Preview::new(grayed, equalized));
+                        } else if ui.button("Histogram matching...").clicked() {
+                            let source_path = open_dialog();
+
+                            if let Some(path) = source_path {
+                                let source_img = load_img_from_path(&path).grayscale();
+
+                                let mut matched = img.clone();
+                                matched.gray_scale();
+                                matched.match_histogram(&source_img);
+
+                                let source_decorator = ImageDecorator::new(source_img, ui.ctx(), "source-image".to_owned(), "Source image".to_owned());
+
+                                self.preview = Some(Preview::new(source_decorator, matched));
+                            }
                         }
                     });
+
                     ui.menu_button("Transform", |ui| {
                         ui.menu_button("Flip", |ui| {
                             if ui.button("Horizontal").clicked() {
@@ -108,6 +118,7 @@ impl PhotoMenges {
                                 img.flip_vertical();
                             }
                         });
+
                         ui.menu_button("Rotate", |ui| {
                             if ui.button("Clockwise").clicked() {
                                 img.rotate_clockwise();
@@ -116,14 +127,16 @@ impl PhotoMenges {
                             }
                         });
                     });
+
                     if ui.button("Luminance").clicked() {
                         img.gray_scale();
                     } else if ui.button("Quantize...").clicked() {
                         self.side_menu = side_menu::quantization;
                     }
                 });
+
                 ui.menu_button("Filter", |ui| {
-                    if ui.button("Convolve").clicked() {
+                    if ui.button("Convolve...").clicked() {
                         self.side_menu = side_menu::convolve;
                     };
                 });
@@ -143,14 +156,15 @@ impl PhotoMenges {
     }
 
     fn load_og_img(&mut self, ctx: &Context) {
-        let in_path = self.img_file_path.as_ref().unwrap().as_path();
-        let loaded_image = image::io::Reader::open(in_path).unwrap().decode().unwrap();
+        let loaded_image = load_img_from_path(self.img_file_path.as_ref().unwrap());
+
         self.new_image = Some(ImageDecorator::new(
             loaded_image.clone(),
             ctx,
             "new-image".to_owned(),
             "New image".to_owned(),
         ));
+
         self.og_image = Some(ImageWrapper::new(
             loaded_image,
             "og-image".to_owned(),

@@ -1,4 +1,4 @@
-use basic_ops::filters::{self, KERNEL_SIZE};
+use basic_ops::filters::{self};
 use egui::{Slider, Ui};
 
 use crate::app::PhotoMenges;
@@ -79,6 +79,8 @@ pub fn convolve(app: &mut PhotoMenges, ui: &mut Ui) {
             };
         });
     });
+
+    ui.separator();
 
     egui::Grid::new("filter-grid").show(ui, |ui| {
         app.kernel.kernel.iter_mut().for_each(|row| {
