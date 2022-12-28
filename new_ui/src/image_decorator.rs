@@ -28,7 +28,7 @@ impl ImageDecorator {
         self.refresh();
     }
 
-    pub fn contrast(&mut self, n: u8) {
+    pub fn contrast(&mut self, n: f64) {
         adjust_contrast(&mut self.wrapper.img, n);
         self.refresh();
     }

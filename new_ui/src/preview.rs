@@ -29,12 +29,12 @@ impl Preview {
                     .size(Size::relative(0.5))
                     .size(Size::exact(3.0))
                     .size(Size::remainder())
-                    .cell_layout(Layout::top_down(Align::Max))
+                    .cell_layout(Layout::bottom_up(Align::Max))
                     .horizontal(|mut strip| {
                         strip.strip(|builder| {
                             builder
                                 .size(Size::remainder().at_most(800.0))
-                                .size(Size::exact(20.0))
+                                .size(Size::exact(10.0))
                                 .vertical(|mut strip| {
                                     strip.cell(|ui| {
                                         self.og_image.ui(ui);
@@ -48,7 +48,7 @@ impl Preview {
                         strip.strip(|builder| {
                             builder
                                 .size(Size::remainder().at_most(800.0))
-                                .size(Size::exact(20.0))
+                                .size(Size::exact(10.0))
                                 .vertical(|mut strip| {
                                     strip.cell(|ui| {
                                         self.new_image.ui(ui);

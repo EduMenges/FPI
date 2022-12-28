@@ -35,6 +35,14 @@ impl KernelWrp {
         rotate_kernel(&mut new_rotated);
         self.rotated = new_rotated;
     }
+
+    pub fn needs_clamping(&self) -> bool {
+        self.kernel.iter().any(|row| {
+            row.iter().any(|val| {
+                *val < 0.0
+            })
+        })
+    }
 }
 
 pub static GAUSSIAN_FILTER: Lazy<KernelWrp> = Lazy::new(|| {
@@ -79,14 +87,14 @@ pub static PREWITT_HY: Lazy<KernelWrp> = Lazy::new(|| {
 pub static SOBEL_HX: Lazy<KernelWrp> = Lazy::new(|| {
     KernelWrp::new(
         [[-1.0, 0.0, 1.0], [-2.0, 0.0, 2.0], [-1.0, 0.0, 1.0]],
-        "Prewitt Hx".to_owned(),
+        "Sobel Hx".to_owned(),
     )
 });
 
 pub static SOBEL_HY: Lazy<KernelWrp> = Lazy::new(|| {
     KernelWrp::new(
         [[-1.0, -2.0, -1.0], [0.0, 0.0, 0.0], [1.0, 2.0, 1.0]],
-        "Prewitt Hy".to_owned(),
+        "Sobel Hy".to_owned(),
     )
 });
 

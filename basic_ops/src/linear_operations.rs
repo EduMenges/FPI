@@ -26,10 +26,17 @@ pub fn adjust_brightness(img: &mut DynamicImage, n: i16) {
     });
 }
 
-pub fn adjust_contrast(img: &mut DynamicImage, n: u8) {
+pub fn adjust_contrast(img: &mut DynamicImage, n: f64) {
     linear_template_function(img, |mut pixel| {
         for i in 0..3_usize {
-            pixel[i] = pixel[i].saturating_mul(n);
+            let in_f64 = (pixel[i] as f64 * n).round();
+            pixel[i] = if in_f64 > u8::MAX as f64 {
+                u8::MAX
+            } else if in_f64 < u8::MIN as f64 {
+                u8::MIN
+            } else {
+                in_f64 as u8
+            };
         }
         pixel
     });

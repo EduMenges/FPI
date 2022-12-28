@@ -39,7 +39,7 @@ pub fn contrast(app: &mut PhotoMenges, ui: &mut Ui) {
     ui.close_menu();
     ui.label("This is the contrast adjustment menu!");
     ui.label("Pick a value in (0, 255].");
-    ui.add(Slider::new(&mut app.contrast_value, 1..=255));
+    ui.add(Slider::new(&mut app.contrast_value, f64::MIN_POSITIVE..=255.0));
 
     if ui.button("Apply").clicked() {
         app.new_image.as_mut().unwrap().contrast(app.contrast_value);
@@ -92,6 +92,7 @@ pub fn convolve(app: &mut PhotoMenges, ui: &mut Ui) {
     });
 
     if ui.button("Apply").clicked() {
+        app.kernel.update_rotated();
         app.new_image.as_mut().unwrap().convolve(&app.kernel);
     }
 }

@@ -23,7 +23,7 @@ pub struct PhotoMenges {
     pub zoom_factor: (u8, u8),
     pub quantization_value: u8,
     pub brightness_value: i16,
-    pub contrast_value: u8,
+    pub contrast_value: f64,
     pub histograms: Vec<HistogramGraph>,
 }
 
@@ -37,7 +37,7 @@ impl Default for PhotoMenges {
             new_image: Default::default(),
             quantization_value: 4,
             brightness_value: 50,
-            contrast_value: 5,
+            contrast_value: 1.5,
             zoom_factor: (1, 1),
             kernel: GAUSSIAN_FILTER.clone(),
             preview: None,
@@ -65,6 +65,7 @@ impl PhotoMenges {
                     if ui.button("Copy").clicked() {
                         img.copy(&self.og_image.as_ref().unwrap().img);
                         ui.close_menu();
+
                     } else if ui.button("Save as...").clicked() {
                         img.save_image();
                         ui.close_menu();
@@ -89,10 +90,9 @@ impl PhotoMenges {
                             let mut equalized = ImageDecorator::new(img.wrapper.img.clone(), ui.ctx(), "equalized".to_owned(), "Equalized".to_owned());
                             equalized.equalize();
 
-                            let mut grayed = ImageDecorator::new(img.wrapper.img.clone(), ui.ctx(), "original".to_owned(), "Original".to_owned());
-                            grayed.gray_scale();
+                            let og_image = ImageDecorator::new(img.wrapper.img.clone(), ui.ctx(), "original".to_owned(), "Original".to_owned());
 
-                            self.preview = Some(Preview::new(grayed, equalized));
+                            self.preview = Some(Preview::new(og_image, equalized));
                         } else if ui.button("Histogram matching...").clicked() {
                             let source_path = open_dialog();
 

@@ -1,6 +1,6 @@
 use image::{DynamicImage, GenericImage, GenericImageView, GrayAlphaImage};
 
-use crate::{linear_operations::linear_template_function, luminance::gray_scale};
+use crate::{linear_operations::linear_template_function};
 
 pub type Histogram = [u32; 256];
 
@@ -44,15 +44,9 @@ pub fn normalized_cumulative(img: &DynamicImage) -> Histogram {
 }
 
 pub fn equalize_histogram(img: &mut DynamicImage) {
-    let luminized = match img.as_mut_luma_alpha8() {
-        Some(img) => img,
-        None => {
-            gray_scale(img);
-            img.as_mut_luma_alpha8().unwrap()
-        }
-    };
+    let luminized = img.to_luma_alpha8();
 
-    let histogram = normalize_histogram(&cumulative_histogram(&calculate_histogram(luminized)));
+    let histogram = normalize_histogram(&cumulative_histogram(&calculate_histogram(&luminized)));
 
     linear_template_function(img, |mut pixel| {
         for i in 0..3_usize {
