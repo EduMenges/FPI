@@ -4,8 +4,8 @@ pub fn linear_template_function<F>(img: &mut DynamicImage, func: F)
 where
     F: Fn(Rgba<u8>) -> Rgba<u8>,
 {
-    for x in 0..img.width() {
-        for y in 0..img.height() {
+    for y in 0..img.height() {
+        for x in 0..img.width() {
             let mut pixel = img.get_pixel(x, y);
             pixel = func(pixel);
             img.put_pixel(x, y, pixel);
