@@ -1,24 +1,24 @@
-use once_cell::sync::Lazy;
+use std::sync::LazyLock;
 
 pub const KERNEL_SIZE: usize = 3;
-pub type Kernel = [[f32; KERNEL_SIZE]; KERNEL_SIZE];
+pub type RawKernel = [[f32; KERNEL_SIZE]; KERNEL_SIZE];
 
 #[derive(Default, Clone)]
-pub struct KernelWrp {
-    pub kernel: Kernel,
+pub struct Kernel {
+    pub kernel: RawKernel,
     name: String,
-    rotated: Kernel,
+    rotated: RawKernel,
 }
 
-impl KernelWrp {
+impl Kernel {
     pub fn name(&self) -> &str {
         &self.name
     }
 
-    pub fn new(kernel: Kernel, name: String) -> Self {
+    pub fn new(kernel: RawKernel, name: String) -> Self {
         let mut rotated = kernel;
         rotate_kernel(&mut rotated);
-        
+
         Self {
             kernel,
             name,
@@ -26,7 +26,7 @@ impl KernelWrp {
         }
     }
 
-    pub const fn rotated(&self) -> Kernel {
+    pub const fn rotated(&self) -> RawKernel {
         self.rotated
     }
 
@@ -37,16 +37,14 @@ impl KernelWrp {
     }
 
     pub fn needs_clamping(&self) -> bool {
-        self.kernel.iter().any(|row| {
-            row.iter().any(|val| {
-                *val < 0.0
-            })
-        })
+        self.kernel
+            .iter()
+            .any(|row| row.iter().any(|val| *val < 0.0))
     }
 }
 
-pub static GAUSSIAN_FILTER: Lazy<KernelWrp> = Lazy::new(|| {
-    KernelWrp::new(
+pub static GAUSSIAN_FILTER: LazyLock<Kernel> = LazyLock::new(|| {
+    Kernel::new(
         [
             [0.0625, 0.125, 0.0625],
             [0.125, 0.25, 0.125],
@@ -56,53 +54,77 @@ pub static GAUSSIAN_FILTER: Lazy<KernelWrp> = Lazy::new(|| {
     )
 });
 
-pub static LAPLACIAN_FILTER: Lazy<KernelWrp> = Lazy::new(|| {
-    KernelWrp::new(
-        [[0.0, -1.0, 0.0], [-1.0, 4.0, -1.0], [0.0, -1.0, 0.0]],
+pub static LAPLACIAN_FILTER: LazyLock<Kernel> = LazyLock::new(|| {
+    Kernel::new(
+        [
+            [0.0, -1.0, 0.0],  //
+            [-1.0, 4.0, -1.0], //
+            [0.0, -1.0, 0.0],
+        ],
         "Laplacian".to_owned(),
     )
 });
 
-pub static HIGH_PASS: Lazy<KernelWrp> = Lazy::new(|| {
-    KernelWrp::new(
-        [[-1.0, -1.0, -1.0], [-1.0, 8.0, -1.0], [-1.0, -1.0, -1.0]],
+pub static HIGH_PASS: LazyLock<Kernel> = LazyLock::new(|| {
+    Kernel::new(
+        [
+            [-1.0, -1.0, -1.0], //
+            [-1.0, 8.0, -1.0],  //
+            [-1.0, -1.0, -1.0],
+        ],
         "High pass".to_owned(),
     )
 });
 
-pub static PREWITT_HX: Lazy<KernelWrp> = Lazy::new(|| {
-    KernelWrp::new(
-        [[-1.0, 0.0, 1.0], [-1.0, 0.0, 1.0], [-1.0, 0.0, 1.0]],
+pub static PREWITT_HX: LazyLock<Kernel> = LazyLock::new(|| {
+    Kernel::new(
+        [
+            [-1.0, 0.0, 1.0], //
+            [-1.0, 0.0, 1.0], //
+            [-1.0, 0.0, 1.0],
+        ],
         "Prewitt Hx".to_owned(),
     )
 });
 
-pub static PREWITT_HY: Lazy<KernelWrp> = Lazy::new(|| {
-    KernelWrp::new(
-        [[-1.0, -1.0, -1.0], [0.0, 0.0, 0.0], [1.0, 1.0, 1.0]],
+pub static PREWITT_HY: LazyLock<Kernel> = LazyLock::new(|| {
+    Kernel::new(
+        [
+            [-1.0, -1.0, -1.0], //
+            [0.0, 0.0, 0.0],    //
+            [1.0, 1.0, 1.0],
+        ],
         "Prewitt Hy".to_owned(),
     )
 });
 
-pub static SOBEL_HX: Lazy<KernelWrp> = Lazy::new(|| {
-    KernelWrp::new(
+pub static SOBEL_HX: LazyLock<Kernel> = LazyLock::new(|| {
+    Kernel::new(
         [[-1.0, 0.0, 1.0], [-2.0, 0.0, 2.0], [-1.0, 0.0, 1.0]],
         "Sobel Hx".to_owned(),
     )
 });
 
-pub static SOBEL_HY: Lazy<KernelWrp> = Lazy::new(|| {
-    KernelWrp::new(
+pub static SOBEL_HY: LazyLock<Kernel> = LazyLock::new(|| {
+    Kernel::new(
         [[-1.0, -2.0, -1.0], [0.0, 0.0, 0.0], [1.0, 2.0, 1.0]],
         "Sobel Hy".to_owned(),
     )
 });
 
-pub static ALL_FILTERS: Lazy<[&Lazy<KernelWrp>; 7]> = Lazy::new(|| {
-    [&GAUSSIAN_FILTER, &LAPLACIAN_FILTER, &HIGH_PASS, &PREWITT_HX, &PREWITT_HY, &SOBEL_HX, &SOBEL_HY]
+pub static ALL_FILTERS: LazyLock<[&LazyLock<Kernel>; 7]> = LazyLock::new(|| {
+    [
+        &GAUSSIAN_FILTER,
+        &LAPLACIAN_FILTER,
+        &HIGH_PASS,
+        &PREWITT_HX,
+        &PREWITT_HY,
+        &SOBEL_HX,
+        &SOBEL_HY,
+    ]
 });
 
-pub fn rotate_kernel(kernel: &mut Kernel) {
+fn rotate_kernel(kernel: &mut RawKernel) {
     kernel.swap(0, 2);
     for row in kernel {
         row.swap(0, 2);

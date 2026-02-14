@@ -1,12 +1,12 @@
-use crate::filters::KernelWrp;
+use crate::filters::Kernel;
 use image::{DynamicImage, GenericImageView, Rgba, Rgba32FImage, SubImage};
 
-use crate::filters::{Kernel, KERNEL_SIZE};
+use crate::filters::{RawKernel, KERNEL_SIZE};
 
-pub fn convolve(img: DynamicImage, kernel: &KernelWrp) -> DynamicImage {
+pub fn convolve(img: DynamicImage, kernel: &Kernel) -> DynamicImage {
     let in_f32 = img.into_rgba32f();
     let mut out = in_f32.clone();
-    let rotated: Kernel = kernel.rotated();
+    let rotated: RawKernel = kernel.rotated();
     let needs_clamping = kernel.needs_clamping();
 
     for y in 1..in_f32.height() - 1 {
@@ -28,7 +28,7 @@ pub fn convolve(img: DynamicImage, kernel: &KernelWrp) -> DynamicImage {
     DynamicImage::ImageRgba32F(out)
 }
 
-fn convolve_pixel(view: SubImage<&Rgba32FImage>, kernel: &Kernel) -> Rgba<f32> {
+fn convolve_pixel(view: SubImage<&Rgba32FImage>, kernel: &RawKernel) -> Rgba<f32> {
     let mut out = Rgba::<f32>([0.0; 4]);
 
     kernel.iter().enumerate().for_each(|(y, row)| {

@@ -12,7 +12,7 @@ pub fn quantize(img: &mut DynamicImage, n: u8) {
         let mut bin_vec: Vec<u8> = Vec::with_capacity(n as usize);
 
         for i in (t_1..t_2).step_by(tb.round() as usize) {
-            bin_vec.push(i + center_offset.round() as u8);
+            bin_vec.push(i.saturating_add(center_offset.round() as u8));
         }
 
         for h in 0..img.height() {

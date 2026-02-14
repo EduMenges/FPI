@@ -1,6 +1,5 @@
 use image::{DynamicImage, GenericImage, GenericImageView, Rgba, SubImage};
 
-#[inline]
 fn calculate_dimension(dimension: u32, factor: u8) -> u32 {
     (dimension as f64 / factor as f64).round() as u32
 }
@@ -99,7 +98,7 @@ fn fill_pixel(img: &mut DynamicImage, (x, y): (u32, u32), incr: (u32, u32)) {
     let pixel_1 = img.get_pixel(x - incr.0, y - incr.1);
     let pixel_2 = img.get_pixel(x + incr.0, y + incr.1);
     let average = average_pixel(&pixel_1, &pixel_2);
-    
+
     img.put_pixel(x, y, average);
 }
 

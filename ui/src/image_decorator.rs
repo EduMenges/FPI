@@ -1,6 +1,6 @@
 use basic_ops::{
     convolve::convolve,
-    filters::KernelWrp,
+    filters::Kernel,
     flip::{flip_horizontal, flip_vertical},
     histogram::{equalize_histogram, matching},
     linear_operations::{adjust_brightness, adjust_contrast, negative},
@@ -33,7 +33,7 @@ impl ImageDecorator {
         self.refresh();
     }
 
-    pub fn convolve(&mut self, kernel: &KernelWrp) {
+    pub fn convolve(&mut self, kernel: &Kernel) {
         self.wrapper.img = convolve(self.wrapper.img.clone(), kernel);
         self.refresh()
     }
@@ -114,7 +114,6 @@ impl ImageDecorator {
                 }
             });
             self.wrapper.ui(ui);
-            
         });
 
         for hist in &mut self.histograms {

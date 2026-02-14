@@ -1,5 +1,23 @@
 # FPI
 
-Repositório de implementação para a cadeira de Fundamentos de Processamento de Imagens, do professor Manuel Menezes de Oliveira Neto, da UFRGS.
+This repository contains all work done for the Fundamentals of Image Processing course.
 
-Aqui não constam as atividades de laboratório, só de implementação.
+## basic_ops
+
+Contains basic image processing operations, such as:
+- Flip
+- Luminance (black and white)
+- Rotation (horizontal and vertical)
+- Zoom
+- Kernel filters
+- Histogram calculation
+- Histogram matching
+- Quantization
+- Linear operations (brightness, contrast, negative)
+- Convolution with kernel filters
+
+## ui
+
+Constains UI using eGUI for such operations.
+
+![UI](./ui/test_images/UI.png)

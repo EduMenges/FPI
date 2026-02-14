@@ -9,14 +9,14 @@ use crate::{
     side_menu::{self, general},
 };
 
-use basic_ops::filters::{KernelWrp, GAUSSIAN_FILTER};
+use basic_ops::filters::{Kernel, GAUSSIAN_FILTER};
 use eframe::App;
 use egui::{menu, CentralPanel, Context, SidePanel, TopBottomPanel, Ui};
 
 pub struct PhotoMenges {
     side_menu: fn(&mut Self, &mut Ui),
     img_file_path: Option<PathBuf>,
-    pub kernel: KernelWrp,
+    pub kernel: Kernel,
     og_image: Option<ImageWrapper>,
     preview: Option<Preview>,
     pub new_image: Option<ImageDecorator>,

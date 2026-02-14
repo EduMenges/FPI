@@ -1,6 +1,6 @@
 use image::{DynamicImage, GenericImage, GenericImageView, GrayAlphaImage};
 
-use crate::{linear_operations::linear_template_function};
+use crate::linear_operations::linear_template_function;
 
 pub type Histogram = [u32; 256];
 
@@ -14,31 +14,26 @@ pub fn calculate_histogram(img: &GrayAlphaImage) -> Histogram {
     out
 }
 
-pub fn cumulative_histogram(histogram: &Histogram) -> Histogram {
-    let mut out: [u32; 256] = [0; 256];
-
-    out[0] = histogram[0];
+pub fn cumulative_histogram(mut histogram: Histogram) -> Histogram {
     for i in 1..256 {
-        out[i] = out[i - 1] + histogram[i];
+        histogram[i] = histogram[i - 1] + histogram[i];
     }
 
-    out
+    histogram
 }
 
-pub fn normalize_histogram(histogram: &Histogram) -> Histogram {
+pub fn normalize_histogram(mut histogram: Histogram) -> Histogram {
     let highest = *histogram.iter().max().unwrap();
-    let mut out: [u32; 256] = [0; 256];
 
-    for i in 0..out.len() {
-        out[i] = histogram[i] * 255 / highest;
+    for i in 0..histogram.len() {
+        histogram[i] = histogram[i] * 255 / highest;
     }
 
-    out
+    histogram
 }
 
-#[inline]
 pub fn normalized_cumulative(img: &DynamicImage) -> Histogram {
-    normalize_histogram(&cumulative_histogram(&calculate_histogram(
+    normalize_histogram(cumulative_histogram(calculate_histogram(
         &img.to_luma_alpha8(),
     )))
 }
@@ -46,7 +41,7 @@ pub fn normalized_cumulative(img: &DynamicImage) -> Histogram {
 pub fn equalize_histogram(img: &mut DynamicImage) {
     let luminized = img.to_luma_alpha8();
 
-    let histogram = normalize_histogram(&cumulative_histogram(&calculate_histogram(&luminized)));
+    let histogram = normalize_histogram(cumulative_histogram(calculate_histogram(&luminized)));
 
     linear_template_function(img, |mut pixel| {
         for i in 0..3_usize {

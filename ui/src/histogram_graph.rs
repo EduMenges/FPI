@@ -61,13 +61,13 @@ impl HistogramGraph {
         let cumulative = Self::new(
             "Cumulative".to_owned(),
             format!("{}-cumulative", img.name()),
-            cumulative_histogram(&regular.raw_values),
+            cumulative_histogram(regular.raw_values),
         );
 
         let normalized_cumulative = Self::new(
             "Normalized cumulative".to_owned(),
             format!("{}-normalized", img.name()),
-            normalize_histogram(&cumulative.raw_values),
+            normalize_histogram(cumulative.raw_values),
         );
 
         [regular, cumulative, normalized_cumulative]
